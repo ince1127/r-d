@@ -1,0 +1,946 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>油廠國小研發組｜業務中心</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@600;700;900&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#FAF8F2;        /* 公文紙 */
+  --paper-deep:#F1EDE2;
+  --ink:#20344F;          /* 墨藍 */
+  --ink-soft:#5B6B80;
+  --seal:#B7352C;         /* 印章紅（市賽） */
+  --seal-soft:#F6E4E1;
+  --pass:#2E7D46;         /* 核章綠（完成） */
+  --pass-soft:#E3EFE6;
+  --gold:#8A6A2F;         /* 卷宗黃（計畫執行） */
+  --line:#D8D2C2;
+  --serif:"Noto Serif TC","PMingLiU",serif;
+  --sans:"Noto Sans TC","Microsoft JhengHei",sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{font-family:var(--sans);background:var(--paper);color:var(--ink);line-height:1.6;
+  background-image:repeating-linear-gradient(0deg,transparent,transparent 31px,rgba(32,52,79,.035) 31px,rgba(32,52,79,.035) 32px);}
+button{font-family:inherit;cursor:pointer}
+
+/* ── 頁首 ── */
+header{border-bottom:3px double var(--ink);background:var(--paper);padding:18px 24px 0;position:sticky;top:0;z-index:20;box-shadow:0 2px 12px rgba(32,52,79,.07)}
+.masthead{display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;gap:8px;max-width:1100px;margin:0 auto}
+.masthead h1{font-family:var(--serif);font-weight:900;font-size:1.45rem;letter-spacing:.12em}
+.masthead h1 small{font-weight:600;font-size:.8rem;color:var(--ink-soft);letter-spacing:.25em;display:block}
+.masthead .year-tag{font-family:var(--serif);font-size:.85rem;color:var(--seal);border:1.5px solid var(--seal);padding:2px 10px;letter-spacing:.2em;transform:rotate(-2deg)}
+
+/* ── 月份軌 ── */
+.month-rail{max-width:1100px;margin:14px auto 0;display:flex;align-items:flex-end;gap:2px;overflow-x:auto;padding-bottom:12px}
+.sem-label{writing-mode:vertical-rl;font-family:var(--serif);font-size:.7rem;letter-spacing:.3em;color:var(--ink-soft);padding:0 4px 4px;flex:none}
+.m-btn{flex:1;min-width:58px;border:none;background:transparent;padding:6px 2px 8px;position:relative;border-bottom:2px solid var(--line);transition:background .15s}
+.m-btn:hover{background:var(--paper-deep)}
+.m-btn .num{font-family:var(--serif);font-weight:700;font-size:1.25rem;line-height:1.1;display:block}
+.m-btn .lbl{font-size:.62rem;color:var(--ink-soft);letter-spacing:.1em}
+.m-btn .dots{display:flex;justify-content:center;gap:2px;margin-top:3px;height:5px}
+.m-btn .dots i{width:5px;height:5px;border-radius:50%;background:var(--line)}
+.m-btn .dots i.on{background:var(--pass)}
+.m-btn .dots i.city{background:var(--seal)}
+.m-btn.active{border-bottom-color:var(--ink)}
+.m-btn.active .num{color:var(--seal)}
+.m-btn.active::after{content:"";position:absolute;top:-2px;left:50%;transform:translateX(-50%);width:40px;height:40px;border:2px solid var(--seal);border-radius:50%;opacity:.55;pointer-events:none}
+.sem-div{width:2px;background:var(--ink);opacity:.25;align-self:stretch;flex:none;margin:0 4px}
+
+/* ── 導覽列 ── */
+nav.tabs{max-width:1100px;margin:0 auto;display:flex;gap:0;border-top:1px solid var(--line)}
+nav.tabs button{background:none;border:none;padding:10px 18px;font-size:.9rem;letter-spacing:.15em;color:var(--ink-soft);border-bottom:3px solid transparent;margin-bottom:-1px}
+nav.tabs button.active{color:var(--ink);font-weight:700;border-bottom-color:var(--seal)}
+nav.tabs button:focus-visible,.m-btn:focus-visible{outline:2px solid var(--seal);outline-offset:2px}
+
+main{max-width:1100px;margin:26px auto 80px;padding:0 24px}
+section.pane{display:none}
+section.pane.show{display:block;animation:fade .25s ease}
+@keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){section.pane.show{animation:none}}
+
+/* ── 本月工作 ── */
+.pane-head{display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:16px}
+.pane-head h2{font-family:var(--serif);font-weight:900;font-size:1.5rem;letter-spacing:.15em}
+.pane-head h2 em{font-style:normal;color:var(--seal)}
+.progress-line{font-size:.85rem;color:var(--ink-soft)}
+.progress-line b{color:var(--pass);font-size:1.05rem}
+.task-list{border-top:2px solid var(--ink)}
+.task{display:flex;align-items:flex-start;gap:12px;padding:11px 6px;border-bottom:1px solid var(--line)}
+.task:hover{background:rgba(32,52,79,.03)}
+.task input[type=checkbox]{width:19px;height:19px;margin-top:3px;accent-color:var(--pass);flex:none;cursor:pointer}
+.task .txt{flex:1}
+.task .txt .t{font-size:.95rem}
+.task.done .txt .t{color:var(--ink-soft);text-decoration:line-through;text-decoration-color:var(--pass);text-decoration-thickness:1.5px}
+.task .meta{display:flex;gap:6px;align-items:center;margin-top:2px;flex-wrap:wrap}
+.chip{font-size:.68rem;letter-spacing:.08em;padding:1px 8px;border:1px solid;border-radius:2px;white-space:nowrap}
+.chip.prog{color:var(--ink);border-color:var(--ink-soft);background:#fff}
+.chip.city{color:#fff;border-color:var(--seal);background:var(--seal);font-weight:700}
+.chip.school{color:var(--seal);border-color:var(--seal);background:var(--seal-soft)}
+.chip.folder{color:var(--gold);border-color:var(--gold);background:#fff;font-family:ui-monospace,monospace;letter-spacing:0}
+.task .del{border:none;background:none;color:var(--line);font-size:1rem;padding:2px 6px;flex:none}
+.task .del.armed{color:#fff;background:var(--seal);border-radius:3px;font-size:.72rem;font-weight:700;padding:2px 7px}
+.task .edit{border:none;background:none;color:var(--line);font-size:1rem;padding:2px 6px;flex:none}
+.task .edit:hover{color:var(--ink)}
+.task:hover .edit{color:var(--ink-soft)}
+.edited-tag{font-size:.62rem;color:var(--gold);border:1px solid var(--gold);border-radius:2px;padding:0 5px;margin-left:8px;letter-spacing:.05em;vertical-align:middle}
+.edit-hint{font-size:.75rem;color:var(--ink-soft);margin-top:10px;letter-spacing:.03em}
+.edit-hint b{color:var(--ink)}
+/* 編輯對話框 */
+.editor-mask{position:fixed;inset:0;background:rgba(20,30,45,.45);display:none;align-items:center;justify-content:center;z-index:60;padding:20px}
+.editor-mask.show{display:flex}
+.editor{background:var(--paper);border:1px solid var(--ink);border-top:4px solid var(--seal);width:100%;max-width:460px;padding:22px 24px;box-shadow:0 12px 40px rgba(0,0,0,.28)}
+.editor h3{font-family:var(--serif);font-size:1.2rem;letter-spacing:.12em;margin-bottom:14px}
+.editor label{font-size:.74rem;letter-spacing:.12em;color:var(--ink-soft);display:block;margin:10px 0 4px}
+.editor textarea,.editor select{width:100%;padding:8px 10px;border:1px solid var(--line);font-family:inherit;font-size:.92rem;background:#fff;resize:vertical}
+.editor .ed-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+@media(max-width:480px){.editor .ed-row{grid-template-columns:1fr}}
+.ed-reset-hint{font-size:.76rem;color:var(--gold);margin-top:12px;display:none}
+.linkbtn{border:none;background:none;color:var(--seal);text-decoration:underline;cursor:pointer;font-size:.76rem;padding:0}
+.ed-actions{display:flex;align-items:center;gap:10px;margin-top:20px}
+.ed-actions button{padding:8px 18px;font-size:.85rem;letter-spacing:.12em;border:1px solid;cursor:pointer}
+.ed-actions .primary-btn{background:var(--ink);color:#fff;border-color:var(--ink)}
+.ed-actions .primary-btn:hover{background:#16263B}
+.ed-actions .ghost{background:#fff;color:var(--ink-soft);border-color:var(--line)}
+.ed-actions .ghost:hover{color:var(--ink)}
+.ed-actions .ghost-danger{background:#fff;color:var(--seal);border-color:var(--seal)}
+.ed-actions .ghost-danger:hover{background:var(--seal);color:#fff}
+.ed-actions .ghost-danger.armed{background:var(--seal);color:#fff;font-weight:700}
+.task .del:hover{color:var(--seal)}
+.add-row{display:flex;gap:8px;margin-top:14px}
+.add-row input{flex:1;padding:9px 12px;border:1px solid var(--line);background:#fff;font-family:inherit;font-size:.9rem}
+.add-row input:focus{outline:2px solid var(--ink);outline-offset:-1px}
+.add-row button{background:var(--ink);color:#fff;border:none;padding:0 20px;letter-spacing:.2em;font-size:.85rem}
+.add-row button:hover{background:#16263B}
+.empty-note{padding:30px 0;text-align:center;color:var(--ink-soft);font-size:.9rem}
+
+/* ── 年度總覽 ── */
+.overview{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px}
+.ov-card{background:#fff;border:1px solid var(--line);border-top:3px solid var(--ink);padding:14px 16px}
+.ov-card h3{font-family:var(--serif);font-size:1.05rem;letter-spacing:.1em;display:flex;justify-content:space-between;align-items:baseline}
+.ov-card h3 span{font-size:.72rem;color:var(--ink-soft);font-family:var(--sans);letter-spacing:0}
+.ov-bar{height:6px;background:var(--paper-deep);margin:8px 0 10px;position:relative}
+.ov-bar i{position:absolute;inset:0 auto 0 0;background:var(--pass);transition:width .3s}
+.ov-card ul{list-style:none;font-size:.8rem;color:var(--ink-soft)}
+.ov-card ul li{padding:2px 0;display:flex;gap:6px}
+.ov-card ul li::before{content:"·";color:var(--gold)}
+.ov-card ul li.city{color:var(--seal);font-weight:700}
+.ov-card ul li.city::before{content:"◉";color:var(--seal)}
+.ov-card button{margin-top:10px;width:100%;background:none;border:1px solid var(--ink-soft);padding:5px;font-size:.78rem;letter-spacing:.2em;color:var(--ink)}
+.ov-card button:hover{background:var(--ink);color:#fff;border-color:var(--ink)}
+
+/* ── SOP ── */
+details.sop{background:#fff;border:1px solid var(--line);margin-bottom:12px}
+details.sop summary{list-style:none;display:flex;align-items:center;gap:12px;padding:13px 18px;cursor:pointer}
+details.sop summary::-webkit-details-marker{display:none}
+details.sop summary .no{font-family:var(--serif);font-weight:700;color:var(--gold);min-width:2.4em}
+details.sop summary h3{font-family:var(--serif);font-size:1.05rem;letter-spacing:.08em;flex:1}
+details.sop summary .arrow{transition:transform .2s;color:var(--ink-soft)}
+details.sop[open] summary .arrow{transform:rotate(90deg)}
+details.sop[open] summary{border-bottom:1px solid var(--line);background:var(--paper-deep)}
+.sop-body{padding:16px 18px;display:grid;gap:16px}
+@media(min-width:760px){.sop-body{grid-template-columns:1fr 1fr}}
+.sop-block h4{font-size:.8rem;letter-spacing:.25em;color:var(--seal);margin-bottom:8px;font-weight:700}
+.sop-block ol{padding-left:1.4em;font-size:.88rem;display:grid;gap:5px}
+.sop-block table{width:100%;border-collapse:collapse;font-size:.85rem}
+.sop-block td{border:1px solid var(--line);padding:5px 9px;vertical-align:top}
+.sop-block td:first-child{white-space:nowrap;background:var(--paper-deep);font-family:var(--serif);font-weight:600;width:5.5em}
+.folder-path{grid-column:1/-1;font-family:ui-monospace,monospace;font-size:.8rem;background:var(--paper-deep);border-left:3px solid var(--gold);padding:8px 12px;color:var(--gold)}
+
+/* ── 競賽 ── */
+.contest-wrap{overflow-x:auto}
+table.contest{width:100%;border-collapse:collapse;background:#fff;font-size:.9rem;min-width:640px}
+table.contest th{background:var(--ink);color:#fff;font-weight:600;letter-spacing:.15em;padding:9px 12px;font-size:.82rem}
+table.contest td{border:1px solid var(--line);padding:9px 12px}
+table.contest td.name{font-family:var(--serif);font-weight:700;letter-spacing:.05em}
+table.contest .city-date{color:var(--seal);font-weight:700}
+table.contest .school-date{color:var(--ink)}
+.legend{display:flex;gap:16px;margin:12px 2px 0;font-size:.78rem;color:var(--ink-soft);flex-wrap:wrap}
+.legend i{display:inline-block;width:10px;height:10px;margin-right:5px;border-radius:2px;vertical-align:-1px}
+
+/* ── 雲端 ── */
+.cloud-btns{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+.cloud-btns button{border:1px solid var(--ink);background:#fff;color:var(--ink);padding:9px 18px;font-size:.85rem;letter-spacing:.15em}
+.cloud-btns button.primary{background:var(--ink);color:#fff}
+.cloud-btns button:hover:not(:disabled){background:var(--gold);border-color:var(--gold);color:#fff}
+.cloud-btns button:disabled{opacity:.5;cursor:wait}
+.cloud-status{font-size:.75rem;color:var(--ink-soft);line-height:1.5}
+.cloud-status.ok{color:var(--pass)}
+.cloud-status.err{color:var(--seal)}
+
+/* ── 工具 ── */
+.tool-grid{display:grid;gap:20px}
+@media(min-width:820px){.tool-grid{grid-template-columns:1.1fr .9fr}}
+.tool-card{background:#fff;border:1px solid var(--line);padding:20px}
+.tool-card h3{font-family:var(--serif);letter-spacing:.15em;margin-bottom:4px}
+.tool-card p.desc{font-size:.82rem;color:var(--ink-soft);margin-bottom:14px}
+.fname-form{display:grid;gap:10px}
+.fname-form label{font-size:.78rem;letter-spacing:.1em;color:var(--ink-soft);display:block;margin-bottom:3px}
+.fname-form input,.fname-form select{width:100%;padding:8px 10px;border:1px solid var(--line);font-family:inherit;font-size:.9rem;background:var(--paper)}
+.fname-form .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.fname-out{margin-top:6px;display:flex;gap:8px;align-items:stretch}
+.fname-out code{flex:1;background:var(--ink);color:#F5E9C8;padding:10px 14px;font-size:.92rem;word-break:break-all;display:flex;align-items:center}
+.fname-out button{background:var(--seal);color:#fff;border:none;padding:0 16px;letter-spacing:.15em;font-size:.82rem}
+.fname-out button:hover{background:#96281f}
+.rule-list{font-size:.85rem;display:grid;gap:6px;padding-left:1.3em}
+.danger-zone{margin-top:14px;border-top:1px dashed var(--line);padding-top:14px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.danger-zone span{font-size:.8rem;color:var(--ink-soft)}
+.danger-zone button{background:none;border:1px solid var(--seal);color:var(--seal);padding:6px 14px;font-size:.8rem;letter-spacing:.1em}
+.danger-zone button:hover{background:var(--seal);color:#fff}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--ink);color:#fff;padding:10px 22px;font-size:.85rem;letter-spacing:.15em;opacity:0;transition:all .25s;z-index:50;box-shadow:0 4px 16px rgba(0,0,0,.2)}
+.toast.show{transform:translateX(-50%) translateY(0);opacity:1}
+footer{max-width:1100px;margin:0 auto;padding:0 24px 40px;font-size:.72rem;color:var(--ink-soft);letter-spacing:.1em;text-align:center}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="masthead">
+    <h1>研發組業務中心<small>高雄市油廠國民小學 教務處</small></h1>
+    <span style="display:flex;align-items:center;gap:8px">
+      <i class="sync-dot" id="syncDot" title="雲端同步狀態"></i>
+      <span class="year-tag">115 學年度</span>
+    </span>
+  </div>
+  <div class="month-rail" id="monthRail" role="tablist" aria-label="學年度月份"></div>
+  <nav class="tabs" id="tabs">
+    <button data-pane="month" class="active">本月工作</button>
+    <button data-pane="overview">年度總覽</button>
+    <button data-pane="sop">業務SOP</button>
+    <button data-pane="contest">競賽時程</button>
+    <button data-pane="tools">工具</button>
+  </nav>
+</header>
+
+<main>
+  <!-- 本月工作 -->
+  <section class="pane show" id="pane-month">
+    <div class="pane-head">
+      <h2><em id="curMonthLabel"></em>工作清單</h2>
+      <div class="progress-line" id="progressLine"></div>
+    </div>
+    <div class="task-list" id="taskList"></div>
+    <div class="add-row">
+      <input id="newTaskInput" type="text" placeholder="新增本月臨時任務，例如：回覆教育局來文…" aria-label="新增任務">
+      <button id="addTaskBtn">加入清單</button>
+    </div>
+    <p class="edit-hint">點任務右側的 <b>✎</b> 可編輯內容、移動月份或刪除；例如把「校內英語朗讀選拔」從 10 月改到 9 月。</p>
+  </section>
+
+  <!-- 年度總覽 -->
+  <section class="pane" id="pane-overview">
+    <div class="pane-head"><h2>年度總覽</h2>
+      <div class="progress-line" id="yearProgress"></div></div>
+    <div class="overview" id="overviewGrid"></div>
+  </section>
+
+  <!-- SOP -->
+  <section class="pane" id="pane-sop">
+    <div class="pane-head"><h2>業務SOP</h2></div>
+    <div id="sopList"></div>
+  </section>
+
+  <!-- 競賽 -->
+  <section class="pane" id="pane-contest">
+    <div class="pane-head"><h2>競賽時程</h2></div>
+    <div class="contest-wrap">
+    <table class="contest">
+      <thead><tr><th>競賽項目</th><th>校內選拔</th><th>高雄市市賽</th><th>備賽重點</th></tr></thead>
+      <tbody id="contestBody"></tbody>
+    </table>
+    </div>
+    <div class="legend">
+      <span><i style="background:var(--seal)"></i>紅色＝市賽（依年度工作檔標色慣例）</span>
+      <span><i style="background:var(--seal-soft);border:1px solid var(--seal)"></i>校內選拔（市賽前2個月）</span>
+    </div>
+  </section>
+
+  <!-- 工具 -->
+  <section class="pane" id="pane-tools">
+    <div class="pane-head"><h2>工具</h2></div>
+    <div class="tool-grid">
+      <div class="tool-card">
+        <h3>檔名產生器</h3>
+        <p class="desc">依「日期＿計畫＿文件類型＿版本」規則產生統一檔名，直接複製使用。</p>
+        <div class="fname-form">
+          <div class="row2">
+            <div><label for="fDate">日期（西元）</label><input type="date" id="fDate"></div>
+            <div><label for="fProg">計畫</label><select id="fProg"></select></div>
+          </div>
+          <div class="row2">
+            <div><label for="fType">文件類型</label>
+              <select id="fType">
+                <option>公文來文</option><option>公文發文</option><option>計畫書</option>
+                <option>經費表</option><option>經費核銷</option><option>簽到表</option>
+                <option>會議紀錄</option><option>成果報告</option><option>報名表</option>
+                <option>名單</option><option>照片</option><option>其他</option>
+              </select></div>
+            <div><label for="fVer">版本（可留白）</label><input type="text" id="fVer" placeholder="v1"></div>
+          </div>
+          <div class="fname-out">
+            <code id="fnameOut">—</code>
+            <button id="copyFname">複製</button>
+          </div>
+        </div>
+      </div>
+      <div class="tool-card">
+        <h3>經費控管表</h3>
+        <p class="desc">經費核銷登錄在你的 Excel 控管表即可。把 Excel 上傳到 Google 雲端硬碟後，貼上分享連結，就能從這裡一鍵開啟。</p>
+        <label for="expenseUrlInput" style="font-size:.78rem;letter-spacing:.1em;color:var(--ink-soft);display:block;margin-bottom:4px">Excel 檔的 Google 雲端硬碟連結</label>
+        <input type="text" id="expenseUrlInput" placeholder="貼上 Google 試算表／Excel 的分享連結…"
+          style="width:100%;padding:9px 11px;border:1px solid var(--line);font-family:ui-monospace,monospace;font-size:.8rem;background:var(--paper);margin-bottom:10px">
+        <div class="cloud-btns">
+          <button id="expenseSaveBtn" class="primary">儲存連結</button>
+          <button id="expenseOpenBtn">開啟經費控管表</button>
+        </div>
+        <p class="cloud-status" id="expenseStatus">尚未設定連結。</p>
+      </div>
+      <div class="tool-card">
+        <h3>雲端同步（Google 試算表）</h3>
+        <p class="desc">連線後，所有進度與核銷紀錄會<b>自動存到你的 Google 試算表</b>，換電腦、清瀏覽資料都能還原。設定一次即可，網址會記在這台電腦。</p>
+        <label for="cloudUrlInput" style="font-size:.78rem;letter-spacing:.1em;color:var(--ink-soft);display:block;margin-bottom:4px">Apps Script 網頁應用程式網址</label>
+        <input type="text" id="cloudUrlInput" placeholder="https://script.google.com/macros/s/.../exec"
+          style="width:100%;padding:9px 11px;border:1px solid var(--line);font-family:ui-monospace,monospace;font-size:.82rem;background:var(--paper);margin-bottom:10px">
+        <div class="cloud-btns">
+          <button id="cloudConnectBtn" class="primary">連線並測試</button>
+          <button id="cloudPullBtn">從雲端還原到本機</button>
+        </div>
+        <p class="cloud-status" id="cloudStatus">尚未連線。請貼上 Google Apps Script 網址後按「連線並測試」。</p>
+        <div class="danger-zone">
+          <span>把被移動、修改或刪除的內建任務，全部還原成預設清單（你自己新增的任務不受影響）。</span>
+          <button id="restoreAllBtn">還原預設清單</button>
+        </div>
+        <div class="danger-zone">
+          <span>清除所有勾選進度與自訂任務，重新開始一個學年度（經費控管表連結會保留）。</span>
+          <button id="resetBtn">重設全部進度</button>
+        </div>
+      </div>
+      <div class="tool-card">
+        <h3>歸檔守則</h3>
+        <p class="desc">來自SOP手冊的四條核心規則。</p>
+        <ol class="rule-list">
+          <li>公文<b>收文當日</b>即存入該計畫「01_公文」資料夾</li>
+          <li>核銷單據掃描檔與經費 Excel <b>放同一資料夾</b>，方便對帳</li>
+          <li>每次活動照片、簽到表<b>即時</b>存入「04_執行紀錄」，照片依日期建子資料夾</li>
+          <li>每月月底將「研發組資料庫」<b>整夾備份</b>至 Google Drive 或外接硬碟</li>
+        </ol>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>油廠國民小學 教務處研發組 · 依 115 學年度年度工作表與業務 SOP 手冊建置 · 進度自動儲存</footer>
+<div class="editor-mask" id="editorMask">
+  <div class="editor" role="dialog" aria-modal="true" aria-labelledby="edTitle">
+    <h3 id="edTitle">編輯任務</h3>
+    <label for="edText">任務內容</label>
+    <textarea id="edText" rows="2"></textarea>
+    <div class="ed-row">
+      <div><label for="edMonth">月份</label><select id="edMonth"></select></div>
+      <div><label for="edProg">計畫</label><select id="edProg"></select></div>
+      <div><label for="edType">類型</label>
+        <select id="edType">
+          <option value="r">一般</option>
+          <option value="c">市賽</option>
+          <option value="s">校內選拔</option>
+        </select></div>
+    </div>
+    <p id="edResetHint" class="ed-reset-hint">這是被調整過的內建任務，可
+      <button type="button" id="edRestoreOne" class="linkbtn">還原為預設</button>。</p>
+    <div class="ed-actions">
+      <button id="edDelete" class="ghost-danger">刪除</button>
+      <span style="flex:1"></span>
+      <button id="edCancel" class="ghost">取消</button>
+      <button id="edSave" class="primary-btn">儲存</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ═══════════ 資料 ═══════════ */
+const MONTHS = [8,9,10,11,12,1,2,3,4,5,6,7];   // 學年度序
+const FOLDER = {
+  "課程計畫":"01_課程計畫","課程評鑑":"02_課程評鑑","課發會":"03_課發會與領域會議",
+  "藝術深耕":"04_藝術深耕","雙語社團":"05_雙語社團","台語沉浸":"06_台語沉浸教學計畫",
+  "科學園遊會":"07_科學園遊會","英語認證":"08_英語認證卡項","競賽":"09_競賽活動",
+  "進修社群":"10_教師進修與社群","行政":"00_共用區"
+};
+// type: r=一般, c=市賽, s=校內選拔
+const TASKS = [
+ // 8月
+ {id:"m8-1",m:8,p:"進修社群",t:"教師進修及社群事宜規劃"},
+ {id:"m8-2",m:8,p:"行政",t:"各項成果彙整、申請"},
+ {id:"m8-3",m:8,p:"藝術深耕",t:"完成藝術深耕申請"},
+ {id:"m8-4",m:8,p:"雙語社團",t:"下學年度雙語社團規劃、開課相關事宜（師資）"},
+ {id:"m8-5",m:8,p:"台語沉浸",t:"下學年度計畫經費表申請、計畫規劃"},
+ {id:"m8-6",m:8,p:"課發會",t:"確認課發會委員及各學習領域小組成員、參加會議順序"},
+ // 9月
+ {id:"m9-1",m:9,p:"科學園遊會",t:"科學園遊會各項申請（與一年級學年主任聯絡主題）"},
+ {id:"m9-2",m:9,p:"科學園遊會",t:"科學園遊會行前會議（依來文時間參加）"},
+ {id:"m9-3",m:9,p:"科學園遊會",t:"報名科學園遊會活動"},
+ {id:"m9-4",m:9,p:"課發會",t:"開課發會：確認委員與小組成員、審議課程計畫變更、校外人士入班協助教學計劃申請"},
+ {id:"m9-5",m:9,p:"課發會",t:"辦理領域會議（每月一次）"},
+ {id:"m9-6",m:9,p:"藝術深耕",t:"藝術深耕經費核定、經費表送件"},
+ {id:"m9-7",m:9,p:"藝術深耕",t:"藝術深耕課程安排、上課、每月經費核銷"},
+ {id:"m9-8",m:9,p:"雙語社團",t:"雙語社團受理報名／規劃／開課、相關經費核銷"},
+ {id:"m9-9",m:9,p:"台語沉浸",t:"台語沉浸教學計畫執行、相關經費核銷"},
+ {id:"m9-10",m:9,p:"競賽",t:"9/12（六）本土語讀者劇場（高雄市賽）",type:"c"},
+ {id:"m9-11",m:9,p:"競賽",t:"校內鄉土歌謠比賽選拔（配合11/2市賽）",type:"s"},
+ {id:"m9-12",m:9,p:"競賽",t:"校內英語RT比賽選拔（配合11/11市賽）",type:"s"},
+ // 10月
+ {id:"m10-1",m:10,p:"科學園遊會",t:"辦理科學園遊會（確認經費、告知教學組派代人員、請假等事宜）"},
+ {id:"m10-2",m:10,p:"英語認證",t:"英語認證卡項活動規劃（一～四年級）"},
+ {id:"m10-3",m:10,p:"藝術深耕",t:"藝術深耕課程安排、上課、每月經費核銷"},
+ {id:"m10-4",m:10,p:"藝術深耕",t:"藝術深耕班級報名歲末感恩音樂會表演"},
+ {id:"m10-5",m:10,p:"台語沉浸",t:"台語沉浸教學計畫執行、相關經費核銷"},
+ {id:"m10-6",m:10,p:"競賽",t:"校內英語朗讀比賽選拔（配合12/9市賽）",type:"s"},
+ // 11月
+ {id:"m11-1",m:11,p:"藝術深耕",t:"藝術深耕課程安排、上課、每月經費核銷"},
+ {id:"m11-2",m:11,p:"雙語社團",t:"寒假雙語社團受理報名／規劃／開課、相關經費核銷"},
+ {id:"m11-3",m:11,p:"台語沉浸",t:"台語沉浸教學計畫執行、相關經費核銷"},
+ {id:"m11-4",m:11,p:"競賽",t:"11/2（一）鄉土歌謠比賽（高雄市賽）",type:"c"},
+ {id:"m11-5",m:11,p:"競賽",t:"11/11（三）英語RT比賽（高雄市賽）",type:"c"},
+ // 12月
+ {id:"m12-1",m:12,p:"課程評鑑",t:"課程評鑑實施表填寫、彙整、掃描"},
+ {id:"m12-2",m:12,p:"藝術深耕",t:"藝術深耕課程安排、上課、每月經費核銷"},
+ {id:"m12-3",m:12,p:"台語沉浸",t:"台語沉浸教學計畫執行、相關經費核銷"},
+ {id:"m12-4",m:12,p:"競賽",t:"12/9（三）英語朗讀初賽（高雄市賽）",type:"c"},
+ // 1月
+ {id:"m1-1",m:1,p:"課程評鑑",t:"課程評鑑實施表填寫、彙整、掃描"},
+ {id:"m1-2",m:1,p:"雙語社團",t:"寒假雙語社團開課"},
+ {id:"m1-3",m:1,p:"台語沉浸",t:"台語沉浸教學計畫執行、相關經費核銷"},
+ {id:"m1-4",m:1,p:"競賽",t:"校內英語單字比賽選拔（配合3/8市賽）",type:"s"},
+ // 2月
+ {id:"m2-1",m:2,p:"雙語社團",t:"雙語社團經費核銷"},
+ {id:"m2-2",m:2,p:"台語沉浸",t:"台語沉浸教學計畫執行、相關經費核銷"},
+ {id:"m2-3",m:2,p:"競賽",t:"校內本土技藝語文競賽選拔（配合4/22市賽）",type:"s"},
+ // 3月
+ {id:"m3-1",m:3,p:"藝術深耕",t:"藝術深耕課程安排、上課、每月經費核銷"},
+ {id:"m3-2",m:3,p:"台語沉浸",t:"台語沉浸教學計畫執行、相關經費核銷"},
+ {id:"m3-3",m:3,p:"競賽",t:"3/8～4/16 英語單字比賽初賽（高雄市賽）",type:"c"},
+ {id:"m3-4",m:3,p:"競賽",t:"校內英語歌唱比賽選拔（配合5/5市賽）",type:"s"},
+ // 4月
+ {id:"m4-1",m:4,p:"藝術深耕",t:"藝術深耕課程安排、上課、每月經費核銷"},
+ {id:"m4-2",m:4,p:"台語沉浸",t:"台語沉浸教學計畫執行、相關經費核銷"},
+ {id:"m4-3",m:4,p:"行政",t:"確認各處室行事曆"},
+ {id:"m4-4",m:4,p:"雙語社團",t:"暑假雙語社團受理報名／規劃／開課"},
+ {id:"m4-5",m:4,p:"競賽",t:"4/22～4/29「咱的故鄉，咱的情」本土技藝語文競賽（高雄市賽）",type:"c"},
+ // 5月
+ {id:"m5-1",m:5,p:"課程評鑑",t:"課程評鑑效果表填寫、彙整、掃描"},
+ {id:"m5-2",m:5,p:"藝術深耕",t:"藝術深耕課程安排、上課、經費核銷"},
+ {id:"m5-3",m:5,p:"台語沉浸",t:"台語沉浸教學計畫執行、相關經費核銷"},
+ {id:"m5-4",m:5,p:"課程計畫",t:"課程計畫前置作業（參加研習）"},
+ {id:"m5-5",m:5,p:"課程計畫",t:"校內課程計畫說明會"},
+ {id:"m5-6",m:5,p:"競賽",t:"5/5（三）英語歌唱比賽（高雄市賽）",type:"c"},
+ // 6月
+ {id:"m6-1",m:6,p:"課程計畫",t:"課程計畫撰寫、彙整"},
+ {id:"m6-2",m:6,p:"課發會",t:"課發會初審、複審"},
+ {id:"m6-3",m:6,p:"課程評鑑",t:"課程評鑑彈性學習設計表、總體架構表"},
+ {id:"m6-4",m:6,p:"課程計畫",t:"上傳課程計畫"},
+ {id:"m6-5",m:6,p:"雙語社團",t:"暑假雙語社團開課前置作業"},
+ {id:"m6-6",m:6,p:"台語沉浸",t:"台語沉浸教學計畫執行、相關經費核銷"},
+ {id:"m6-7",m:6,p:"台語沉浸",t:"台語沉浸教學計畫成果上傳及填報"},
+ // 7月
+ {id:"m7-1",m:7,p:"行政",t:"相關計畫成果填報"},
+ {id:"m7-2",m:7,p:"雙語社團",t:"暑假雙語社團開課及學年度社團經費核銷"},
+ {id:"m7-3",m:7,p:"雙語社團",t:"學年度雙語社團成果填報"},
+ {id:"m7-4",m:7,p:"台語沉浸",t:"台語沉浸教學計畫、相關經費核銷結案，成果上傳及填報"},
+ {id:"m7-5",m:7,p:"競賽",t:"校內本土語讀者劇場選拔（配合9/12市賽）",type:"s"},
+];
+
+const SOP = [
+ {name:"課程計畫",no:"3-1",folder:"01_課程計畫",
+  time:[["5月","參加課程計畫研習（前置作業）、辦理校內課程計畫說明會"],["6月","課程計畫撰寫彙整、課發會初審複審、上傳課程計畫"],["9月","開課發會審議是否變更課程計畫"]],
+  steps:["5月參加教育局研習，掌握當年度檢核表變動（紅字議題融入、指定主題節數等）","召開校內說明會，發放格式與撰寫說明給各學年／領域","收件後逐一檢核（議題融入、節數、CLIL設計理念等高雄市檢核項目）","排定課發會初審、複審，會議紀錄存入03_課發會資料夾","依限上傳課程計畫至高雄市平台，備份存入05_上傳備份","同步更新Google Sites課程計畫超連結目錄"]},
+ {name:"課程評鑑",no:"3-2",folder:"02_課程評鑑",
+  time:[["12月、1月","課程評鑑實施表填寫、彙整、掃描"],["5月","課程評鑑效果表填寫、彙整、掃描"],["6月","彈性學習設計表、總體架構表"]],
+  steps:["依時程發放表件給各學年／領域，明訂繳交期限","收齊後檢查完整性，掃描為PDF","掃描檔依表件類型存入02～04子資料夾，原始紙本歸檔"]},
+ {name:"藝術深耕",no:"3-3",folder:"04_藝術深耕",
+  time:[["8月","完成藝術深耕申請"],["9月","經費核定、經費表送件"],["9月～5月","課程安排、上課、每月經費核銷"],["10月","班級報名歲末感恩音樂會表演"]],
+  steps:["8月依來文完成申請計畫書（含劇團／師資合作內容）","核定後製作經費表送件，核定文存檔","與合作團隊確認課表，通知級任教師","每月月底辦理核銷：領據、單據掃描、Excel登錄","期末彙整照片與教學反思，撰寫成果報告"]},
+ {name:"雙語社團",no:"3-4",folder:"05_雙語社團",
+  time:[["8月","下學年度規劃、師資確認"],["9月","受理報名、開課、經費核銷"],["11月","寒假社團受理報名規劃"],["1月","寒假社團開課"],["4月","暑假社團受理報名規劃"],["7月","暑假社團開課、學年度經費核銷、成果填報"]],
+  steps:["確認師資與開課類型，簽陳核定","發放報名表→彙整名單→通知錄取→開課","每期結束辦理鐘點費等經費核銷","7月完成學年度成果填報"]},
+ {name:"台語沉浸教學計畫",no:"3-5",folder:"06_台語沉浸教學計畫",
+  time:[["8月","下學年度計畫規劃、經費表申請"],["9月～6月","計畫執行、每月相關經費核銷"],["6月","成果上傳及填報"],["7月","經費核銷結案、成果上傳及填報"]],
+  steps:["8月完成計畫書與經費表送件","協調台語教學支援人員課表，執行沉浸式教學","每月核銷鐘點費與相關經費","期間持續蒐集教學照片、學生作品作為成果素材","6～7月完成成果報告、平台上傳與填報、經費結案"]},
+ {name:"科學園遊會",no:"3-6",folder:"07_科學園遊會",
+  time:[["9月","各項申請（與一年級學年主任聯絡主題）、行前會議、報名"],["10月","辦理科學園遊會（經費、派代、請假等）"]],
+  steps:["9月收文後與一年級學年主任確認主題並完成報名","依來文時間參加行前會議","活動前確認經費、告知教學組派代人員與請假事宜","活動照片與成果存檔"]},
+ {name:"競賽活動",no:"3-7",folder:"09_競賽活動",
+  time:[["市賽前2個月","辦理校內選拔"],["市賽當月","報名、練習、參賽"]],
+  steps:["市賽前2個月辦理校內選拔：公告辦法→報名→評選→公布名單","確認市賽報名期限，依簡章完成線上／紙本報名","安排選手練習時程，聯繫指導教師","賽前確認交通、公假、家長同意書","賽後成績公告、獎狀掃描、成果（照片、海報）存檔"]},
+ {name:"教師進修與社群、其他",no:"3-8",folder:"10_教師進修與社群",
+  time:[["8月","教師進修及社群事宜規劃、確認課發會委員名單"],["9月起","辦理領域會議（每月一次）"],["10月","英語認證卡項活動規劃（一～四年級）"],["4月","確認各處室行事曆"],["7月","相關計畫成果填報"]],
+  steps:["8月盤點年度進修需求，規劃社群運作方式","每月領域會議：開會通知→簽到→紀錄→存檔","英語認證卡項：規劃認證項目→製卡→執行→成果統計"]},
+];
+
+const CONTESTS = [
+ ["本土語讀者劇場","7月選拔","9/12（六）","本土語文選材、劇本編排、口語流暢度"],
+ ["鄉土歌謠比賽","9月選拔","11/2（一）","曲目選定、練唱時程、伴奏安排"],
+ ["英語RT比賽","9月選拔","11/11（三）","Reader's Theater劇本、角色分配、台風訓練"],
+ ["英語朗讀比賽","10月選拔","12/9（三）初賽","發音語調、指定文章熟讀"],
+ ["英語單字比賽","1月選拔","3/8～4/16 初賽","單字表範圍公告、線上／紙筆測驗形式確認"],
+ ["本土技藝語文競賽","2月選拔","4/22～4/29","「咱的故鄉，咱的情」主題、各組報名項目"],
+ ["英語歌唱比賽","3月選拔","5/5（三）","曲目、隊形、服裝道具（延續獲獎經驗）"],
+];
+
+/* ═══════════ 儲存（本機 localStorage + Google 試算表雲端） ═══════════ */
+const KEY = "rd115-dashboard";          // 本機快取鍵
+const CLOUD_URL_KEY = "rd115-cloud-url"; // 儲存 Apps Script 網址
+let state = { done:{}, custom:[], overrides:{}, expenseUrl:"" };
+// overrides: { [內建任務id]: {m,t,p,type,deleted} } 用來編輯或移動內建清單項目
+let cloudUrl = "";
+let cloudReady = false;
+
+function getCloudUrl(){ try{ return localStorage.getItem(CLOUD_URL_KEY)||""; }catch(e){ return ""; } }
+function setCloudUrl(u){ try{ localStorage.setItem(CLOUD_URL_KEY, u); }catch(e){} cloudUrl=u; }
+
+// 開啟流程：先讀本機（秒開），再向雲端要最新資料覆蓋
+async function loadState(){
+  // 1) 本機快取
+  try{
+    const raw = localStorage.getItem(KEY);
+    if(raw) state = JSON.parse(raw);
+  }catch(e){}
+  if(!state.overrides) state.overrides = {};
+  if(state.expenseUrl===undefined) state.expenseUrl = "";
+  // 2) 雲端最新（若已設定網址）
+  cloudUrl = getCloudUrl();
+  if(cloudUrl){
+    try{
+      const r = await fetch(cloudUrl, {method:"GET"});
+      const j = await r.json();
+      if(j && j.ok && j.data){
+        const remote = JSON.parse(j.data);
+        state = { done:remote.done||{}, custom:remote.custom||[], overrides:remote.overrides||{}, expenseUrl:remote.expenseUrl||"" };
+        localStorage.setItem(KEY, JSON.stringify(state)); // 同步回本機
+        cloudReady = true;
+      } else {
+        cloudReady = true; // 雲端可連但尚無資料（首次）
+      }
+    }catch(e){
+      cloudReady = false;  // 連不上，先用本機
+    }
+  }
+}
+
+let saveTimer=null;
+function saveState(){
+  // 本機即時存
+  try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(e){}
+  // 雲端防抖推送
+  clearTimeout(saveTimer);
+  saveTimer=setTimeout(pushCloud, 600);
+}
+
+async function pushCloud(){
+  if(!cloudUrl) return;                       // 未設定雲端 → 只存本機
+  const dot=$("#syncDot");
+  if(dot){ dot.className="sync-dot syncing"; dot.title="同步中…"; }
+  try{
+    // 用 text/plain 避免觸發 CORS preflight（Apps Script 不支援 OPTIONS）
+    const body = JSON.stringify({ action:"save", payload: JSON.stringify({...state, savedAt:new Date().toISOString()}) });
+    const r = await fetch(cloudUrl, { method:"POST", headers:{"Content-Type":"text/plain;charset=utf-8"}, body });
+    const j = await r.json();
+    if(j && j.ok){ cloudReady=true; if(dot){ dot.className="sync-dot ok"; dot.title="已同步至 Google 試算表"; } }
+    else throw new Error("回應異常");
+  }catch(e){
+    cloudReady=false; if(dot){ dot.className="sync-dot err"; dot.title="同步失敗，資料已存本機"; }
+  }
+}
+
+/* ═══════════ 畫面 ═══════════ */
+const $ = s=>document.querySelector(s);
+let curMonth = (()=>{ const m=new Date().getMonth()+1; return MONTHS.includes(m)?m:8; })();
+
+// 套用使用者對內建任務的編輯（overrides）
+function effectiveTask(t){
+  const o = state.overrides && state.overrides[t.id];
+  if(!o) return t;
+  return {...t, ...o};
+}
+function allTasks(){
+  const built = TASKS
+    .filter(t=>!(state.overrides[t.id] && state.overrides[t.id].deleted))
+    .map(effectiveTask);
+  return built.concat(state.custom);
+}
+function tasksOf(m){
+  return allTasks().filter(t=>t.m===m);
+}
+function findTask(id){
+  return allTasks().find(t=>t.id===id);
+}
+function hasEdits(){
+  return Object.keys(state.overrides||{}).length>0;
+}
+function doneCount(m){
+  const ts=tasksOf(m); return [ts.filter(t=>state.done[t.id]).length, ts.length];
+}
+
+function renderRail(){
+  const rail=$("#monthRail"); rail.innerHTML="";
+  const semA=document.createElement("div");semA.className="sem-label";semA.textContent="上學期";rail.appendChild(semA);
+  MONTHS.forEach((m,i)=>{
+    if(i===5){const d=document.createElement("div");d.className="sem-div";rail.appendChild(d);
+      const s=document.createElement("div");s.className="sem-label";s.textContent="下學期";rail.appendChild(s);}
+    const b=document.createElement("button");
+    b.className="m-btn"+(m===curMonth?" active":"");
+    b.setAttribute("role","tab");
+    const [d,tot]=doneCount(m);
+    const hasCity = tasksOf(m).some(t=>t.type==="c");
+    b.innerHTML=`<span class="num">${m}</span><span class="lbl">月</span>
+      <span class="dots">
+        <i class="${d===tot&&tot>0?'on':''}"></i>
+        <i class="${d>0&&d<tot?'on':''}"></i>
+        <i class="${hasCity?'city':''}"></i>
+      </span>`;
+    b.title=`${m}月：${d}/${tot} 完成${hasCity?"（含市賽）":""}`;
+    b.onclick=()=>{curMonth=m;showPane("month");renderAll();};
+    rail.appendChild(b);
+  });
+}
+
+function chipHtml(t){
+  let c=`<span class="chip prog">${t.p}</span>`;
+  if(t.type==="c") c+=`<span class="chip city">市賽</span>`;
+  if(t.type==="s") c+=`<span class="chip school">校內選拔</span>`;
+  c+=`<span class="chip folder">${t.custom?"—":FOLDER[t.p]||""}</span>`;
+  return c;
+}
+
+function renderTasks(){
+  $("#curMonthLabel").textContent=curMonth+"月";
+  const list=$("#taskList"); list.innerHTML="";
+  const ts=tasksOf(curMonth);
+  if(!ts.length){list.innerHTML=`<div class="empty-note">本月尚無排定任務，可於下方新增。</div>`;}
+  ts.forEach(t=>{
+    const row=document.createElement("div");
+    row.className="task"+(state.done[t.id]?" done":"");
+    const edited = !t.custom && state.overrides[t.id];
+    row.innerHTML=`
+      <input type="checkbox" ${state.done[t.id]?"checked":""} aria-label="完成：${t.t}">
+      <div class="txt"><div class="t">${t.t}${edited?'<span class="edited-tag" title="已調整">已調整</span>':''}</div><div class="meta">${chipHtml(t)}</div></div>
+      <button class="edit" title="編輯此任務">✎</button>
+      ${t.custom?'<button class="del" title="刪除此任務">✕</button>':""}`;
+    row.querySelector("input").onchange=e=>{
+      if(e.target.checked) state.done[t.id]=true; else delete state.done[t.id];
+      saveState(); renderAll();
+    };
+    row.querySelector(".edit").onclick=()=>openEditor(t.id);
+    if(t.custom){
+      const delBtn=row.querySelector(".del");
+      delBtn.onclick=()=>{
+        if(delBtn.dataset.armed!=="1"){
+          delBtn.dataset.armed="1"; delBtn.textContent="確定?"; delBtn.classList.add("armed");
+          clearTimeout(delBtn._t);
+          delBtn._t=setTimeout(()=>{ delBtn.dataset.armed="0"; delBtn.textContent="✕"; delBtn.classList.remove("armed"); },3000);
+          return;
+        }
+        clearTimeout(delBtn._t);
+        state.custom=state.custom.filter(x=>x.id!==t.id);
+        delete state.done[t.id]; saveState(); renderAll();
+      };
+    }
+    list.appendChild(row);
+  });
+  const [d,tot]=doneCount(curMonth);
+  $("#progressLine").innerHTML=`本月完成 <b>${d}</b> ／ ${tot} 項`;
+}
+
+function addCustom(){
+  const inp=$("#newTaskInput"); const v=inp.value.trim();
+  if(!v) return;
+  state.custom.push({id:"c"+Date.now(),m:curMonth,p:"行政",t:v,custom:true});
+  inp.value=""; saveState(); renderAll(); toast("已加入本月清單");
+}
+
+/* ═══════════ 任務編輯 ═══════════ */
+let editingId=null;
+const MONTH_ORDER=[8,9,10,11,12,1,2,3,4,5,6,7];
+function openEditor(id){
+  const t=findTask(id); if(!t) return;
+  editingId=id;
+  // 計畫下拉
+  const progSel=$("#edProg"); progSel.innerHTML="";
+  Object.keys(FOLDER).forEach(p=>progSel.appendChild(new Option(p,p)));
+  progSel.value=t.p||"行政";
+  // 月份下拉（依學年度序）
+  const mSel=$("#edMonth"); mSel.innerHTML="";
+  MONTH_ORDER.forEach(m=>mSel.appendChild(new Option(m+"月",m)));
+  mSel.value=t.m;
+  // 類型
+  $("#edType").value=t.type||"r";
+  $("#edText").value=t.t||"";
+  $("#edTitle").textContent=t.custom?"編輯自訂任務":"編輯任務";
+  $("#edResetHint").style.display=(!t.custom && state.overrides[id])?"block":"none";
+  const delBtn=$("#edDelete"); delBtn.dataset.armed="0"; delBtn.classList.remove("armed"); delBtn.textContent="刪除"; clearTimeout(delBtn._t);
+  $("#editorMask").classList.add("show");
+  setTimeout(()=>$("#edText").focus(),50);
+}
+function closeEditor(){ editingId=null; $("#editorMask").classList.remove("show"); }
+function saveEditor(){
+  const id=editingId; if(!id) return;
+  const t=findTask(id); if(!t) return;
+  const newText=$("#edText").value.trim();
+  if(!newText){ toast("內容不可空白"); return; }
+  const patch={ t:newText, m:parseInt($("#edMonth").value,10), p:$("#edProg").value, type:$("#edType").value };
+  if(patch.type==="r") delete patch.type;
+  if(t.custom){
+    const c=state.custom.find(x=>x.id===id);
+    Object.assign(c,{t:patch.t,m:patch.m,p:patch.p});
+    if(patch.type) c.type=patch.type; else delete c.type;
+  }else{
+    // 只記錄與原始不同的欄位，保持精簡
+    const orig=TASKS.find(x=>x.id===id);
+    const o={};
+    if(patch.t!==orig.t) o.t=patch.t;
+    if(patch.m!==orig.m) o.m=patch.m;
+    if(patch.p!==orig.p) o.p=patch.p;
+    if((patch.type||"r")!==(orig.type||"r")) o.type=patch.type||"r";
+    if(Object.keys(o).length) state.overrides[id]=o; else delete state.overrides[id];
+  }
+  saveState(); closeEditor(); renderAll(); toast("已更新任務");
+}
+function deleteFromEditor(){
+  const id=editingId; if(!id) return;
+  const t=findTask(id); if(!t) return;
+  const btn=$("#edDelete");
+  // 兩段式確認：不依賴瀏覽器 confirm 對話框（避免被「不再顯示對話方塊」封鎖）
+  if(btn.dataset.armed!=="1"){
+    btn.dataset.armed="1";
+    btn.dataset.orig=btn.textContent;
+    btn.textContent="再按一次確認刪除";
+    btn.classList.add("armed");
+    clearTimeout(btn._t);
+    btn._t=setTimeout(()=>{ btn.dataset.armed="0"; btn.textContent=btn.dataset.orig||"刪除"; btn.classList.remove("armed"); },3000);
+    return;
+  }
+  clearTimeout(btn._t); btn.dataset.armed="0"; btn.classList.remove("armed");
+  if(t.custom){
+    state.custom=state.custom.filter(x=>x.id!==id);
+  }else{
+    state.overrides[id]={...(state.overrides[id]||{}), deleted:true};
+  }
+  delete state.done[id];
+  saveState(); closeEditor(); renderAll(); toast("已刪除任務");
+}
+function restoreOneFromEditor(){
+  const id=editingId; if(!id) return;
+  delete state.overrides[id];
+  saveState(); closeEditor(); renderAll(); toast("已還原為預設");
+}
+function restoreAllDefaults(){
+  if(!hasEdits()){ toast("目前沒有任何調整"); return; }
+  if(!confirm("將所有內建任務還原為預設（含被移動、修改、刪除的項目）。\n你自己新增的任務不受影響。確定嗎？")) return;
+  state.overrides={}; saveState(); renderAll(); toast("已全部還原為預設清單");
+}
+
+function renderOverview(){
+  const g=$("#overviewGrid"); g.innerHTML="";
+  let yd=0,yt=0;
+  MONTHS.forEach(m=>{
+    const ts=tasksOf(m); const d=ts.filter(t=>state.done[t.id]).length;
+    yd+=d; yt+=ts.length;
+    const card=document.createElement("div"); card.className="ov-card";
+    const pct=ts.length?Math.round(d/ts.length*100):0;
+    const preview=ts.slice(0,4).map(t=>`<li class="${t.type==='c'?'city':''}">${t.t.length>17?t.t.slice(0,17)+"…":t.t}</li>`).join("");
+    card.innerHTML=`<h3>${m}月<span>${d}/${ts.length}</span></h3>
+      <div class="ov-bar"><i style="width:${pct}%"></i></div>
+      <ul>${preview}${ts.length>4?`<li>…共 ${ts.length} 項</li>`:""}</ul>
+      <button>查看本月</button>`;
+    card.querySelector("button").onclick=()=>{curMonth=m;showPane("month");renderAll();window.scrollTo({top:0});};
+    g.appendChild(card);
+  });
+  $("#yearProgress").innerHTML=`學年度完成 <b>${yd}</b> ／ ${yt} 項（${yt?Math.round(yd/yt*100):0}%）`;
+}
+
+function renderSop(){
+  const wrap=$("#sopList"); wrap.innerHTML="";
+  SOP.forEach(s=>{
+    const d=document.createElement("details"); d.className="sop";
+    d.innerHTML=`<summary><span class="no">${s.no}</span><h3>${s.name}</h3><span class="arrow">▶</span></summary>
+      <div class="sop-body">
+        <div class="sop-block"><h4>年度時程</h4>
+          <table>${s.time.map(r=>`<tr><td>${r[0]}</td><td>${r[1]}</td></tr>`).join("")}</table></div>
+        <div class="sop-block"><h4>作業流程</h4>
+          <ol>${s.steps.map(x=>`<li>${x}</li>`).join("")}</ol></div>
+        <div class="folder-path">📁 研發組資料庫／115學年度／${s.folder}</div>
+      </div>`;
+    wrap.appendChild(d);
+  });
+}
+
+function renderContest(){
+  $("#contestBody").innerHTML=CONTESTS.map(c=>`
+    <tr><td class="name">${c[0]}</td>
+        <td class="school-date">${c[1]}</td>
+        <td class="city-date">${c[2]}</td>
+        <td style="font-size:.83rem;color:var(--ink-soft)">${c[3]}</td></tr>`).join("");
+}
+
+/* 檔名產生器 */
+function initTool(){
+  const sel=$("#fProg");
+  Object.keys(FOLDER).forEach(p=>{const o=document.createElement("option");o.textContent=p;sel.appendChild(o);});
+  $("#fDate").valueAsDate=new Date();
+  const upd=()=>{
+    const dv=$("#fDate").value;
+    let dat="———";
+    if(dv){const[y,mo,dd]=dv.split("-");dat=(parseInt(y)-1911)+mo+dd;}
+    const ver=$("#fVer").value.trim();
+    $("#fnameOut").textContent=`${dat}_${sel.value}_${$("#fType").value}${ver?"_"+ver:""}`;
+  };
+  ["fDate","fProg","fType","fVer"].forEach(id=>$("#"+id).addEventListener("input",upd));
+  upd();
+  $("#copyFname").onclick=async()=>{
+    try{await navigator.clipboard.writeText($("#fnameOut").textContent);toast("檔名已複製");}
+    catch(e){toast("複製失敗，請手動選取");}
+  };
+}
+
+/* ═══════════ 經費控管表連結 ═══════════ */
+const EXPENSE_URL_KEY = "rd115-expense-url";
+function getExpenseUrl(){ return (state.expenseUrl)||""; }
+function initExpenseLink(){
+  const input=$("#expenseUrlInput");
+  input.value=getExpenseUrl();
+  refreshExpenseUI();
+  $("#expenseSaveBtn").onclick=()=>{
+    const u=(input.value||"").trim();
+    state.expenseUrl=u; saveState(); refreshExpenseUI();
+    toast(u?"已儲存經費控管表連結":"已清除連結");
+  };
+  $("#expenseOpenBtn").onclick=()=>{
+    const u=getExpenseUrl();
+    if(!u){ $("#expenseStatus").textContent="請先貼上連結並儲存。"; $("#expenseStatus").className="cloud-status err"; return; }
+    window.open(u,"_blank");
+  };
+}
+function refreshExpenseUI(){
+  const el=$("#expenseStatus"), u=getExpenseUrl();
+  if(u){ el.textContent="✓ 已設定，點「開啟經費控管表」即可開啟 Excel。"; el.className="cloud-status ok"; }
+  else { el.textContent="尚未設定連結。"; el.className="cloud-status"; }
+}
+
+/* ═══════════ 雲端連線（Google 試算表） ═══════════ */
+function cloudStatus(msg,cls){ const el=$("#cloudStatus"); if(!el)return; el.textContent=msg; el.className="cloud-status"+(cls?" "+cls:""); }
+
+function refreshCloudUI(){
+  const input=$("#cloudUrlInput");
+  if(input && !input.value) input.value = cloudUrl;
+  if(!cloudUrl){
+    cloudStatus("尚未連線。請貼上 Google Apps Script 網址後按「連線並測試」。");
+  }else if(cloudReady){
+    cloudStatus("✓ 已連線 Google 試算表，資料會自動雲端同步。","ok");
+  }else{
+    cloudStatus("已設定網址，但目前連不上雲端；資料暫存本機，恢復連線後會自動同步。","err");
+  }
+}
+
+// 連線並測試：存網址 → GET 測通 → 若雲端有資料詢問是否拉回
+async function cloudConnect(){
+  const input=$("#cloudUrlInput");
+  const url=(input.value||"").trim();
+  if(!/^https:\/\/script\.google\.com\/.+/.test(url)){
+    cloudStatus("網址格式不對，應為 https://script.google.com/macros/s/.../exec","err"); return;
+  }
+  const btn=$("#cloudConnectBtn"); btn.disabled=true;
+  cloudStatus("連線測試中…");
+  try{
+    const r=await fetch(url,{method:"GET"});
+    const j=await r.json();
+    if(!j||!j.ok) throw new Error("回應異常，請確認已部署為「網頁應用程式」且存取權為「任何人」");
+    setCloudUrl(url); cloudReady=true;
+    if(j.data){
+      const remote=JSON.parse(j.data);
+      const remoteCount=Object.keys(remote.done||{}).length + (remote.custom||[]).length + Object.keys(remote.overrides||{}).length;
+      const localCount=Object.keys(state.done||{}).length + (state.custom||[]).length;
+      if(remoteCount>0 && confirm(`雲端已有資料（${remoteCount} 項）。\n要用雲端資料覆蓋目前畫面嗎？\n\n「確定」＝拉回雲端資料（建議換電腦後選這個）\n「取消」＝保留目前資料，並在下次變更時上傳覆蓋雲端`)){
+        state={ done:remote.done||{}, custom:remote.custom||[], overrides:remote.overrides||{}, expenseUrl:remote.expenseUrl||"" };
+        localStorage.setItem(KEY,JSON.stringify(state));
+        renderAll(); refreshExpenseUI();
+        toast("已拉回雲端資料");
+      }else if(localCount>0){
+        await pushCloud();  // 以本機為準，推上雲端
+      }
+    }else{
+      await pushCloud();    // 雲端空 → 首次上傳
+    }
+    refreshCloudUI(); toast("雲端連線成功");
+  }catch(err){
+    cloudStatus("連線失敗："+err.message,"err");
+  }
+  btn.disabled=false;
+}
+
+async function cloudPull(){
+  if(!cloudUrl){ cloudStatus("尚未設定雲端網址。","err"); return; }
+  const btn=$("#cloudPullBtn"); btn.disabled=true;
+  cloudStatus("從雲端讀取中…");
+  try{
+    const r=await fetch(cloudUrl,{method:"GET"});
+    const j=await r.json();
+    if(!j||!j.ok||!j.data) throw new Error("雲端尚無資料");
+    const remote=JSON.parse(j.data);
+    if(!confirm("將用雲端資料覆蓋目前畫面，確定嗎？")){ refreshCloudUI(); btn.disabled=false; return; }
+    state={ done:remote.done||{}, custom:remote.custom||[], overrides:remote.overrides||{}, expenseUrl:remote.expenseUrl||"" };
+    localStorage.setItem(KEY,JSON.stringify(state));
+    cloudReady=true; renderAll(); refreshCloudUI(); refreshExpenseUI(); toast("已從雲端還原");
+  }catch(err){
+    cloudStatus("讀取失敗："+err.message,"err");
+  }
+  btn.disabled=false;
+}
+
+/* 分頁與雜項 */
+function showPane(name){
+  document.querySelectorAll(".pane").forEach(p=>p.classList.remove("show"));
+  $("#pane-"+name).classList.add("show");
+  document.querySelectorAll("nav.tabs button").forEach(b=>b.classList.toggle("active",b.dataset.pane===name));
+}
+function toast(msg){
+  const t=$("#toast"); t.textContent=msg; t.classList.add("show");
+  clearTimeout(t._h); t._h=setTimeout(()=>t.classList.remove("show"),2200);
+}
+function renderAll(){ renderRail(); renderTasks(); renderOverview(); }
+
+document.addEventListener("DOMContentLoaded", async ()=>{
+  await loadState();
+  document.querySelectorAll("nav.tabs button").forEach(b=>b.onclick=()=>showPane(b.dataset.pane));
+  $("#addTaskBtn").onclick=addCustom;
+  $("#newTaskInput").addEventListener("keydown",e=>{if(e.key==="Enter")addCustom();});
+  $("#resetBtn").onclick=async()=>{
+    if(!confirm("確定要清除所有勾選進度、自訂任務與核銷紀錄嗎？此動作無法復原。\n（若已連線雲端，雲端資料也會一併被覆蓋為空白）"))return;
+    state={done:{},custom:[],overrides:{},expenseUrl:state.expenseUrl||""};
+    try{localStorage.setItem(KEY,JSON.stringify(state));}catch(e){}
+    if(cloudUrl) await pushCloud();
+    renderAll(); toast("已重設，開始新的學年度（經費控管表連結保留）");
+  };
+  $("#cloudConnectBtn").onclick=cloudConnect;
+  $("#cloudPullBtn").onclick=cloudPull;
+  $("#restoreAllBtn").onclick=restoreAllDefaults;
+  // 編輯對話框
+  $("#edCancel").onclick=closeEditor;
+  $("#edSave").onclick=saveEditor;
+  $("#edDelete").onclick=deleteFromEditor;
+  $("#edRestoreOne").onclick=restoreOneFromEditor;
+  $("#editorMask").addEventListener("click",e=>{ if(e.target.id==="editorMask") closeEditor(); });
+  document.addEventListener("keydown",e=>{ if(e.key==="Escape" && editingId) closeEditor(); });
+  renderSop(); renderContest(); initTool(); initExpenseLink(); renderAll();
+  refreshCloudUI();
+  const dot=$("#syncDot");
+  if(dot){ if(!cloudUrl){dot.className="sync-dot";dot.title="未連線雲端（僅存本機）";}
+           else if(cloudReady){dot.className="sync-dot ok";dot.title="已連線 Google 試算表";}
+           else {dot.className="sync-dot err";dot.title="雲端連不上，暫存本機";} }
+  if(!cloudUrl) toast("提示：可到「工具」分頁設定雲端同步，資料就會存到 Google 試算表");
+});
+</script>
+</body>
+</html>
