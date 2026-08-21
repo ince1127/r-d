@@ -1,4 +1,4 @@
-<!DOCTYPE html>      
+<!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
 <meta charset="UTF-8">
@@ -278,6 +278,15 @@ footer{max-width:1100px;margin:0 auto;padding:0 24px 40px;font-size:.72rem;color
     <div class="pane-head"><h2>工具</h2></div>
     <div class="tool-grid">
       <div class="tool-card" style="grid-column:1/-1">
+        <h3>分類名稱自訂</h3>
+        <p class="desc">改這裡，「本月工作」「業務SOP」「檔名產生器」上的分類名稱都會跟著變。留白＝用原本名稱。</p>
+        <div class="fl-help">
+          <b>重要：</b>這裡改的是<b>系統顯示名稱</b>。改完後，建議到 Google 雲端硬碟把對應資料夾也改成同名（例如都叫「07_臨時」），
+          點資料夾連結、存檔歸位才會一致。已設定的資料夾網址<b>不會因改名而失效</b>。
+        </div>
+        <div class="fl-grid" id="programNameGrid"></div>
+      </div>
+      <div class="tool-card" style="grid-column:1/-1">
         <h3>資料夾快速連結</h3>
         <p class="desc">設定後，「本月工作」與「業務SOP」上的 📁 資料夾圖示就能一鍵開啟對應的 Google 雲端硬碟資料夾。</p>
         <div class="fl-help">
@@ -517,7 +526,7 @@ const CONTESTS = [
 /* ═══════════ 儲存（本機 localStorage + Google 試算表雲端） ═══════════ */
 const KEY = "rd115-dashboard";          // 本機快取鍵
 const CLOUD_URL_KEY = "rd115-cloud-url"; // 儲存 Apps Script 網址
-let state = { done:{}, custom:[], overrides:{}, expenseUrl:"", folderLinks:{} };
+let state = { done:{}, custom:[], overrides:{}, expenseUrl:"", folderLinks:{}, programNames:{} };
 // overrides: { [內建任務id]: {m,t,p,type,deleted} } 用來編輯或移動內建清單項目
 let cloudUrl = "";
 let cloudReady = false;
@@ -534,6 +543,7 @@ async function loadState(){
   }catch(e){}
   if(!state.overrides) state.overrides = {};
   if(!state.folderLinks) state.folderLinks = {};
+  if(!state.programNames) state.programNames = {};
   if(state.expenseUrl===undefined) state.expenseUrl = "";
   // 2) 雲端最新（若已設定網址）
   cloudUrl = getCloudUrl();
@@ -543,7 +553,7 @@ async function loadState(){
       const j = await r.json();
       if(j && j.ok && j.data){
         const remote = JSON.parse(j.data);
-        state = { done:remote.done||{}, custom:remote.custom||[], overrides:remote.overrides||{}, expenseUrl:remote.expenseUrl||"", folderLinks:remote.folderLinks||{} };
+        state = { done:remote.done||{}, custom:remote.custom||[], overrides:remote.overrides||{}, expenseUrl:remote.expenseUrl||"", folderLinks:remote.folderLinks||{}, programNames:remote.programNames||{} };
         localStorage.setItem(KEY, JSON.stringify(state)); // 同步回本機
         cloudReady = true;
       } else {
@@ -632,17 +642,31 @@ function renderRail(){
   });
 }
 
+/* 顯示名稱：計畫分類可自訂，內部識別碼(FOLDER值)保持不變，避免連結斷掉 */
+function dispProg(p){ return (state.programNames && state.programNames[p]) || p; }
+function dispFolderName(p){
+  const full = FOLDER[p]||"";
+  const m = full.match(/^(\d+)_(.+)$/);
+  const custom = state.programNames && state.programNames[p];
+  return (m && custom) ? (m[1]+"_"+custom) : full;
+}
+function dispFolderByFull(full){
+  const p = Object.keys(FOLDER).find(k=>FOLDER[k]===full);
+  return p ? dispFolderName(p) : full;
+}
+
 function chipHtml(t){
-  let c=`<span class="chip prog">${t.p}</span>`;
+  let c=`<span class="chip prog">${dispProg(t.p)}</span>`;
   if(t.type==="c") c+=`<span class="chip city">市賽</span>`;
   if(t.type==="s") c+=`<span class="chip school">校內選拔</span>`;
-  const fname = t.custom ? "" : (FOLDER[t.p]||"");
-  if(fname){
-    const url = state.folderLinks && state.folderLinks[fname];
+  const key = t.custom ? "" : (FOLDER[t.p]||"");   // 內部識別碼（原始資料夾名）
+  const show = t.custom ? "" : dispFolderName(t.p); // 顯示名
+  if(key){
+    const url = state.folderLinks && state.folderLinks[key];
     if(url){
-      c+=`<a class="chip folder linked" href="${url}" target="_blank" rel="noopener" title="開啟雲端硬碟資料夾：${fname}">📁 ${fname} ↗</a>`;
+      c+=`<a class="chip folder linked" href="${url}" target="_blank" rel="noopener" title="開啟雲端硬碟資料夾：${show}">📁 ${show} ↗</a>`;
     }else{
-      c+=`<span class="chip folder" title="尚未設定連結，可到「工具」分頁設定" onclick="showPane('tools');document.getElementById('pane-tools').scrollIntoView()">📁 ${fname}</span>`;
+      c+=`<span class="chip folder" title="尚未設定連結，可到「工具」分頁設定" onclick="showPane('tools');document.getElementById('pane-tools').scrollIntoView()">📁 ${show}</span>`;
     }
   }else{
     c+=`<span class="chip folder">—</span>`;
@@ -808,8 +832,8 @@ function renderSop(){
           <ol>${s.steps.map(x=>`<li>${x}</li>`).join("")}</ol></div>
         ${(function(){ const u=state.folderLinks&&state.folderLinks[s.folder];
           return u
-            ? `<a class="folder-path linked" href="${u}" target="_blank" rel="noopener">📁 研發組資料庫／115學年度／${s.folder} ↗</a>`
-            : `<div class="folder-path" title="尚未設定連結，可到「工具」分頁設定" onclick="showPane('tools');document.getElementById('pane-tools').scrollIntoView()">📁 研發組資料庫／115學年度／${s.folder}</div>`;
+            ? `<a class="folder-path linked" href="${u}" target="_blank" rel="noopener">📁 研發組資料庫／115學年度／${dispFolderByFull(s.folder)} ↗</a>`
+            : `<div class="folder-path" title="尚未設定連結，可到「工具」分頁設定" onclick="showPane('tools');document.getElementById('pane-tools').scrollIntoView()">📁 研發組資料庫／115學年度／${dispFolderByFull(s.folder)}</div>`;
         })()}
       </div>`;
     wrap.appendChild(d);
@@ -825,17 +849,26 @@ function renderContest(){
 }
 
 /* 檔名產生器 */
+function refreshFnameSelect(){
+  const sel=$("#fProg"); if(!sel) return;
+  const cur=sel.value;
+  sel.innerHTML="";
+  Object.keys(FOLDER).forEach(p=>{const o=document.createElement("option");o.value=p;o.textContent=dispProg(p);sel.appendChild(o);});
+  if(cur && FOLDER[cur]) sel.value=cur;
+  if(typeof updateFname==="function") updateFname();
+}
 function initTool(){
   const sel=$("#fProg");
-  Object.keys(FOLDER).forEach(p=>{const o=document.createElement("option");o.textContent=p;sel.appendChild(o);});
+  Object.keys(FOLDER).forEach(p=>{const o=document.createElement("option");o.value=p;o.textContent=dispProg(p);sel.appendChild(o);});
   $("#fDate").valueAsDate=new Date();
-  const upd=()=>{
+  window.updateFname=()=>{
     const dv=$("#fDate").value;
     let dat="———";
     if(dv){const[y,mo,dd]=dv.split("-");dat=(parseInt(y)-1911)+mo+dd;}
     const ver=$("#fVer").value.trim();
-    $("#fnameOut").textContent=`${dat}_${sel.value}_${$("#fType").value}${ver?"_"+ver:""}`;
+    $("#fnameOut").textContent=`${dat}_${dispProg(sel.value)}_${$("#fType").value}${ver?"_"+ver:""}`;
   };
+  const upd=window.updateFname;
   ["fDate","fProg","fType","fVer"].forEach(id=>$("#"+id).addEventListener("input",upd));
   upd();
   $("#copyFname").onclick=async()=>{
@@ -844,22 +877,48 @@ function initTool(){
   };
 }
 
+/* ═══════════ 分類名稱自訂 ═══════════ */
+function renderProgramNames(){
+  const grid=$("#programNameGrid"); if(!grid) return;
+  grid.innerHTML="";
+  Object.keys(FOLDER).sort((a,b)=>FOLDER[a].localeCompare(FOLDER[b])).forEach(p=>{
+    const orig=FOLDER[p];                       // 07_科學園遊會
+    const m=orig.match(/^(\d+)_(.+)$/);
+    const num=m?m[1]:"", origName=m?m[2]:orig;
+    const custom=(state.programNames&&state.programNames[p])||"";
+    const row=document.createElement("div"); row.className="fl-row";
+    row.innerHTML=`<div class="fl-name"><span class="dot ${custom?"set":""}"></span>${num?num+"_":""}${origName}</div>
+      <input type="text" placeholder="留白＝用原本名稱，例如：臨時" value="${custom}">`;
+    const input=row.querySelector("input");
+    const dot=row.querySelector(".dot");
+    input.addEventListener("change",()=>{
+      const v=(input.value||"").trim();
+      if(v) state.programNames[p]=v; else delete state.programNames[p];
+      dot.classList.toggle("set",!!v);
+      saveState();
+      renderTasks(); renderSop(); renderFolderLinks(); refreshFnameSelect(); renderOverview();
+      toast(v?`已改名為「${num?num+"_":""}${v}」`:"已還原原本名稱");
+    });
+    grid.appendChild(row);
+  });
+}
+
 /* ═══════════ 資料夾快速連結 ═══════════ */
-// 依資料夾編號排序的清單（去重）
-const FOLDER_LIST = Array.from(new Set(Object.values(FOLDER))).sort();
 function renderFolderLinks(){
   const grid=$("#folderLinkGrid"); if(!grid) return;
   grid.innerHTML="";
-  FOLDER_LIST.forEach(fname=>{
-    const url=(state.folderLinks&&state.folderLinks[fname])||"";
+  Object.keys(FOLDER).sort((a,b)=>FOLDER[a].localeCompare(FOLDER[b])).forEach(p=>{
+    const key=FOLDER[p];               // 內部識別碼（原始資料夾名，不隨改名變動）
+    const show=dispFolderName(p);      // 顯示名（可能已改）
+    const url=(state.folderLinks&&state.folderLinks[key])||"";
     const row=document.createElement("div"); row.className="fl-row";
-    row.innerHTML=`<div class="fl-name"><span class="dot ${url?"set":""}"></span>${fname}</div>
+    row.innerHTML=`<div class="fl-name"><span class="dot ${url?"set":""}"></span>${show}</div>
       <input type="text" placeholder="貼上此資料夾的 Google 雲端硬碟網址…" value="${url}">`;
     const input=row.querySelector("input");
     const dot=row.querySelector(".dot");
     input.addEventListener("change",()=>{
       const v=(input.value||"").trim();
-      if(v) state.folderLinks[fname]=v; else delete state.folderLinks[fname];
+      if(v) state.folderLinks[key]=v; else delete state.folderLinks[key];
       dot.classList.toggle("set",!!v);
       saveState();
       renderTasks(); renderSop();       // 讓標籤立即變成可點
@@ -927,7 +986,7 @@ async function cloudConnect(){
       const remoteCount=Object.keys(remote.done||{}).length + (remote.custom||[]).length + Object.keys(remote.overrides||{}).length;
       const localCount=Object.keys(state.done||{}).length + (state.custom||[]).length;
       if(remoteCount>0 && confirm(`雲端已有資料（${remoteCount} 項）。\n要用雲端資料覆蓋目前畫面嗎？\n\n「確定」＝拉回雲端資料（建議換電腦後選這個）\n「取消」＝保留目前資料，並在下次變更時上傳覆蓋雲端`)){
-        state={ done:remote.done||{}, custom:remote.custom||[], overrides:remote.overrides||{}, expenseUrl:remote.expenseUrl||"", folderLinks:remote.folderLinks||{} };
+        state={ done:remote.done||{}, custom:remote.custom||[], overrides:remote.overrides||{}, expenseUrl:remote.expenseUrl||"", folderLinks:remote.folderLinks||{}, programNames:remote.programNames||{} };
         localStorage.setItem(KEY,JSON.stringify(state));
         renderAll(); refreshExpenseUI();
         toast("已拉回雲端資料");
@@ -954,7 +1013,7 @@ async function cloudPull(){
     if(!j||!j.ok||!j.data) throw new Error("雲端尚無資料");
     const remote=JSON.parse(j.data);
     if(!confirm("將用雲端資料覆蓋目前畫面，確定嗎？")){ refreshCloudUI(); btn.disabled=false; return; }
-    state={ done:remote.done||{}, custom:remote.custom||[], overrides:remote.overrides||{}, expenseUrl:remote.expenseUrl||"", folderLinks:remote.folderLinks||{} };
+    state={ done:remote.done||{}, custom:remote.custom||[], overrides:remote.overrides||{}, expenseUrl:remote.expenseUrl||"", folderLinks:remote.folderLinks||{}, programNames:remote.programNames||{} };
     localStorage.setItem(KEY,JSON.stringify(state));
     cloudReady=true; renderAll(); refreshCloudUI(); refreshExpenseUI(); toast("已從雲端還原");
   }catch(err){
@@ -982,7 +1041,7 @@ document.addEventListener("DOMContentLoaded", async ()=>{
   $("#newTaskInput").addEventListener("keydown",e=>{if(e.key==="Enter")addCustom();});
   $("#resetBtn").onclick=async()=>{
     if(!confirm("確定要清除所有勾選進度、自訂任務與核銷紀錄嗎？此動作無法復原。\n（若已連線雲端，雲端資料也會一併被覆蓋為空白）"))return;
-    state={done:{},custom:[],overrides:{},expenseUrl:state.expenseUrl||"",folderLinks:state.folderLinks||{}};
+    state={done:{},custom:[],overrides:{},expenseUrl:state.expenseUrl||"",folderLinks:state.folderLinks||{},programNames:state.programNames||{}};
     try{localStorage.setItem(KEY,JSON.stringify(state));}catch(e){}
     if(cloudUrl) await pushCloud();
     renderAll(); toast("已重設，開始新的學年度（經費控管表連結保留）");
@@ -997,7 +1056,7 @@ document.addEventListener("DOMContentLoaded", async ()=>{
   $("#edRestoreOne").onclick=restoreOneFromEditor;
   $("#editorMask").addEventListener("click",e=>{ if(e.target.id==="editorMask") closeEditor(); });
   document.addEventListener("keydown",e=>{ if(e.key==="Escape" && editingId) closeEditor(); });
-  renderSop(); renderContest(); initTool(); initExpenseLink(); renderFolderLinks(); renderAll();
+  renderSop(); renderContest(); initTool(); initExpenseLink(); renderProgramNames(); renderFolderLinks(); renderAll();
   refreshCloudUI();
   const dot=$("#syncDot");
   if(dot){ if(!cloudUrl){dot.className="sync-dot";dot.title="未連線雲端（僅存本機）";}
@@ -1008,4 +1067,5 @@ document.addEventListener("DOMContentLoaded", async ()=>{
 </script>
 </body>
 </html>
+
 
